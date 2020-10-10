@@ -1,0 +1,12 @@
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 0 --opt SWAG &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 1 --opt SWAG &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 2 --opt SWAG &
+python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 0 --opt NA &
+python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 1 --opt NA &
+python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 2 --opt NA &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 0 --opt VOGN &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 1 --opt VOGN &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 2 --opt VOGN &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 0 --opt BBB &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 1 --opt BBB &
+#python3 MNIST_runner.py --eps 0.11 --lam 0.1 --rob 2 --opt BBB &
