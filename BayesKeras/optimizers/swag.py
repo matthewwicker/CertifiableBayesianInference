@@ -69,7 +69,7 @@ class StochasticWeightAveragingGaussian(optimizer.Optimizer):
                 loss = self.loss_func(labels, predictions, worst_case, self.robust_lambda)
 
             elif(int(self.robust_train) == 2):
-                features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
+                features_adv = analyzers.PGD(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
                 # Get the probabilities
                 worst_case = self.model(features_adv)
                 # Calculate the loss
@@ -88,7 +88,7 @@ class StochasticWeightAveragingGaussian(optimizer.Optimizer):
                 loss = self.loss_func(labels, output)
 
             elif(int(self.robust_train) == 4):
-                features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
+                features_adv = analyzers.PGD(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
                 # Get the probabilities
                 worst_case = self.model(features_adv)
                 output = (predictions*self.robust_lambda) + ((1-self.robust_lambda)*worst_case)

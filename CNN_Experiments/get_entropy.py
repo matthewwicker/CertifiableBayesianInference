@@ -41,14 +41,18 @@ model_type = "small"
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--opt")
+parser.add_argument("--gpu", nargs='?', default='0,1,2,3,4,5')
+
 
 args = parser.parse_args()
 inference = str(args.opt)
+gpu = str(args.gpu)
+os.environ['CUDA_VISIBLE_DEVICES'] = gpu
 
 loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
 num_images = 500
-for rob in [0,3]:
+for rob in [3]:
     accuracy = tf.keras.metrics.Accuracy()
     model = PosteriorModel("%s_%s_Posterior_%s"%(inference, model_type,  rob))
     preds = model.predict(X_test[0:num_images])

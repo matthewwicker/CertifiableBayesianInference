@@ -76,9 +76,9 @@ def gradient_expectation(model, inp, direction, loss_fn, num_models=10):
 
 # Approx Second order gradients 
 # - To be implimented when it becomes important for l2 certification
-
+#   Default is set to 1 model for training ease
 # FGSM
-def FGSM(model, inp, loss_fn, eps, direction=-1, num_models=100, order=1):
+def FGSM(model, inp, loss_fn, eps, direction=-1, num_models=1, order=1):
     inp = np.asarray(inp)
     maxi = inp + eps; mini = inp - eps
     direc = direction # !*! come back and fix
@@ -143,13 +143,14 @@ def _PGD(model, inp, loss_fn, eps, direc=-1, step=0.1, num_steps=15, num_models=
 
     adv = np.asarray(inp)
     maxi = adv + eps; mini = adv - eps
-    adv = adv + ((eps/(100)) * np.sign(np.random.normal(0.0, 1.0, size=adv.shape)))
+    adv = adv + ((eps/10) * np.sign(np.random.normal(0.0, 1.0, size=adv.shape)))
     adv = np.clip(adv, 0.0, 1.0)
-    for j in trange(num_steps):
+    #print("PERFORMING PGD")
+    for j in range(num_steps+1):
         if(order == 1):
             grad = gradient_expectation(model, adv, direc, loss_fn, num_models)
-        elif(order == 1):
-            grad = zeroth_order_gradient(model, adv, direc, loss_fn, num_models)
+        #elif(order == 1):
+        #    grad = zeroth_order_gradient(model, adv, direc, loss_fn, num_models)
         #grad = grad/np.max(grad, axis=1) #(grad-np.min(grad))/(np.max(grad)-np.min(grad))
         grad = np.sign(grad)
         # Normalize as below if you want to do l2 optimization
@@ -162,7 +163,7 @@ def _PGD(model, inp, loss_fn, eps, direc=-1, step=0.1, num_steps=15, num_models=
     adv = np.clip(adv, 0, 1)
     return adv
 
-def PGD(model, inp, loss_fn, eps, direction=-1, step=0.1, num_steps=5, num_models=15, order=1, restarts=0):
+def PGD(model, inp, loss_fn, eps, direction=-1, step=0.1, num_steps=5, num_models=-1, order=1, restarts=0):
     advs = []
     for i in range(restarts+1):
         adv = _PGD(model, inp, loss_fn, eps, direc=direction, 

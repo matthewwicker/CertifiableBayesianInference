@@ -91,7 +91,7 @@ class BayesByBackprop(optimizer.Optimizer):
             
             elif(int(self.robust_train) == 2):
                 predictions = self.model(features)
-                features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
+                features_adv = analyzers.PGD(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
                 # Get the probabilities
                 worst_case = self.model(features_adv)
                 #print(predictions[0], worst_case[0])
@@ -112,6 +112,8 @@ class BayesByBackprop(optimizer.Optimizer):
                 one_hot_cls = tf.one_hot(labels, depth=10)
                 output = tf.math.reduce_max((self.robust_lambda*(predictions*one_hot_cls))  + ((1-self.robust_lambda)*(worst_case*one_hot_cls)), axis=1)
                 loss = self.loss_func(labels, predictions)
+
+
         # Get the gradients
         weight_gradient = tape.gradient(loss, self.model.trainable_variables)
         mean_gradient = tape.gradient(loss, self.posterior_mean)

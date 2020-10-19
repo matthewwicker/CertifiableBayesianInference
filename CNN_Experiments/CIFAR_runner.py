@@ -129,18 +129,19 @@ elif(model_type == "large"):
 lr = 1
 print("Got flag: %s"%(optim))
 if(optim == 'VOGN'):
-    learning_rate = 0.35*lr; decay=0.075
-#    learning_rate = 1.5*lr; decay=0.0
+#    learning_rate = 0.35*lr; decay=0.075
+    learning_rate = 0.25*lr; decay=0.025
     #learning_rate = 0.05*lr; decay=0.0
     opt = optimizers.VariationalOnlineGuassNewton()
 elif(optim == 'BBB'):
-    learning_rate = 0.5*lr; decay=0.0
+    learning_rate = 0.65*lr; decay=0.0
     opt = optimizers.BayesByBackprop()
 elif(optim == 'SWAG'):
-    learning_rate = 0.05*lr; decay=0.125
+#    learning_rate = 0.0125*lr; decay=0.025
+    learning_rate = 0.015*lr; decay=0.0
     opt = optimizers.StochasticWeightAveragingGaussian()
 elif(optim == 'NA'):
-    learning_rate = 0.00075*lr; decay=0.075
+    learning_rate = 0.00025*lr; decay=0.025
     opt = optimizers.NoisyAdam()
 elif(optim == 'SGD'):
     learning_rate = 0.05*lr; decay=0.1
@@ -154,7 +155,7 @@ else:
 inf = 2.5
 #learning_rate *= 1.5
 
-bayes_model = opt.compile(model, loss_fn=loss, epochs=25, learning_rate=learning_rate, batch_size=128, input_noise=0.0,
+bayes_model = opt.compile(model, loss_fn=loss, epochs=45, learning_rate=learning_rate, batch_size=128, input_noise=0.0,
                           decay=decay, robust_train=rob, epsilon=eps, rob_lam=lam, inflate_prior=inf, log_path="%s_%s_Posterior_%s.log"%(optim, model_type, rob))
 
 # Train the model on your data
