@@ -64,8 +64,9 @@ class BayesByBackprop(optimizer.Optimizer):
         with tf.GradientTape(persistent=True) as tape:   # Below we add an extra variable for IBP
             tape.watch(self.posterior_mean) 
             tape.watch(self.posterior_var); #tape.watch(init_weights)
+            predictions = self.model(features)
+
             if(self.robust_train == 0):
-                predictions = self.model(features)
                 worst_case = predictions # cheap hack lol
                 loss, kl_comp = losses.KL_Loss(labels, predictions, self.model.trainable_variables,
                                                self.prior_mean, self.prior_var, 
@@ -73,7 +74,6 @@ class BayesByBackprop(optimizer.Optimizer):
                                                self.loss_func, self.kl_weight)
             elif(int(self.robust_train) == 1):
                 # Get the probabilities
-                predictions = self.model(features)
                 logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=self.epsilon)
                 #!*! TODO: Undo the hardcoding of depth in this function
                 v1 = tf.one_hot(labels, depth=10)
@@ -90,7 +90,6 @@ class BayesByBackprop(optimizer.Optimizer):
                                                       worst_case, self.robust_lambda)
             
             elif(int(self.robust_train) == 2):
-                predictions = self.model(features)
                 features_adv = analyzers.PGD(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
                 # Get the probabilities
                 worst_case = self.model(features_adv)
@@ -113,7 +112,35 @@ class BayesByBackprop(optimizer.Optimizer):
                 output = tf.math.reduce_max((self.robust_lambda*(predictions*one_hot_cls))  + ((1-self.robust_lambda)*(worst_case*one_hot_cls)), axis=1)
                 loss = self.loss_func(labels, predictions)
 
+            elif(int(self.robust_train) == 5):
+                output = tf.zeros(predictions.shape)
+                for _mc_ in range(self.loss_monte_carlo):
+                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=eps)
+                    v1 = tf.one_hot(labels, depth=10)
+                    v2 = 1 - tf.one_hot(labels, depth=10)
+                    v1 = tf.squeeze(v1); v2 = tf.squeeze(v2)
+                    worst_case = tf.math.add(tf.math.multiply(v2, logit_u), tf.math.multiply(v1, logit_l))
+                    worst_case = self.model.layers[-1].activation(worst_case)
+                    one_hot_cls = tf.one_hot(labels, depth=10)
+                    output += (1.0/self.loss_monte_carlo) * worst_case
 
+                loss, kl_comp = losses.KL_Loss(labels, output, self.model.trainable_variables,
+                                               self.prior_mean, self.prior_var, 
+                                               self.posterior_mean, self.posterior_var, 
+                                               self.loss_func, self.kl_weight)
+
+            elif(int(self.robust_train) == 6):
+                output = tf.zeros(predictions.shape)
+                for _mc_ in range(self.loss_monte_carlo):
+                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
+                    worst_case = self.model(features_adv)
+                    output += (1.0/self.loss_monte_carlo) * worst_case
+                loss, kl_comp = losses.KL_Loss(labels, output, self.model.trainable_variables,
+                                               self.prior_mean, self.prior_var, 
+                                               self.posterior_mean, self.posterior_var, 
+                                               self.loss_func, self.kl_weight)
         # Get the gradients
         weight_gradient = tape.gradient(loss, self.model.trainable_variables)
         mean_gradient = tape.gradient(loss, self.posterior_mean)

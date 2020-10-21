@@ -55,11 +55,11 @@ if(optim == 'VOGN'):
     learning_rate = 0.35; decay=0.0
     opt = optimizers.VariationalOnlineGuassNewton()
 elif(optim == 'BBB'):
-    inf = 10
+    inf = 2
     learning_rate = 0.45; decay=0.0
     opt = optimizers.BayesByBackprop()
 elif(optim == 'SWAG'):
-    learning_rate = 0.01; decay=0.0
+    learning_rate = 0.1; decay=0.0
     opt = optimizers.StochasticWeightAveragingGaussian()
 elif(optim == 'SWAG-FC'):
     learning_rate = 0.01; decay=0.0; full_covar=True

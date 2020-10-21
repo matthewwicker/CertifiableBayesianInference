@@ -67,6 +67,8 @@ class Optimizer(ABC):
 
         self.attack_loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
+        self.loss_monte_carlo = kwargs.get('loss_mc', 2)
+
         self.acc_log = []
         self.rob_log = []
         self.loss_log = []
@@ -126,7 +128,7 @@ class Optimizer(ABC):
         elif(self.robust_train == 2):
             v_loss = self.loss_func(labels, predictions, predictions, self.robust_lambda)
             worst_case = predictions
-        elif(self.robust_train == 3): # We only check with IBP if we need to 
+        elif(self.robust_train == 3 or self.robust_train == 5): # We only check with IBP if we need to 
             logit_l, logit_u = analyzers.IBP(self, features, self.model.get_weights(), self.epsilon)
             #logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, 0.0)
             #print(logit_l.shape)

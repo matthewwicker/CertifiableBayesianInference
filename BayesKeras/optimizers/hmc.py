@@ -42,8 +42,8 @@ class HamiltonianMonteCarlo(optimizer.Optimizer):
             print(type(self.posterior_mean[i]))
 
         self.preload = kwargs.get('preload', -1)
-#        if(type(self.preload) != -1 or self.preload != ""):
-        if(False):
+        if(type(self.preload) != int):
+#        if(False):
             print("Preloaded posterior mean weights: %s"%(self.preload))
             self.posterior_mean = np.load(self.preload + "/mean.npy", allow_pickle=True)
             self.posterior_mean = list(self.posterior_mean)
@@ -162,7 +162,30 @@ class HamiltonianMonteCarlo(optimizer.Optimizer):
                                                self.prior_var, self.q, self.loss_func, 
                                                worst_case, self.robust_lambda)
                 #loss = self.loss_func(labels, predictions, worst_case, self.robust_lambda)
-                #self.train_rob(labels, worst_case)
+            elif(int(self.robust_train) == 5):
+                output = tf.zeros(predictions.shape)
+                for _mc_ in range(self.loss_monte_carlo):
+                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=eps)
+                    v1 = tf.one_hot(labels, depth=10)
+                    v2 = 1 - tf.one_hot(labels, depth=10)
+                    v1 = tf.squeeze(v1); v2 = tf.squeeze(v2)
+                    worst_case = tf.math.add(tf.math.multiply(v2, logit_u), tf.math.multiply(v1, logit_l))
+                    worst_case = self.model.layers[-1].activation(worst_case)
+                    one_hot_cls = tf.one_hot(labels, depth=10)
+                    output += (1.0/self.loss_monte_carlo) * worst_case
+                loss = losses.normal_potential_energy(labels, predictions, self.prior_mean,
+                                               self.prior_var, self.q, self.loss_func)     
+            elif(int(self.robust_train) == 6):
+                predictions = self.model(features)
+                output = tf.zeros(predictions.shape)
+                for _mc_ in range(self.loss_monte_carlo):
+                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
+                    worst_case = self.model(features_adv)
+                    output += (1.0/self.loss_monte_carlo) * worst_case
+                loss = losses.normal_potential_energy(labels, predictions, self.prior_mean,
+                                               self.prior_var, self.q, self.loss_func)     
 
         # Get the gradients
         weight_gradient = tape.gradient(loss, self.model.trainable_variables)
@@ -225,7 +248,7 @@ class HamiltonianMonteCarlo(optimizer.Optimizer):
         self.current_U = self.evaluate_U(X_train, y_train)
         self.burning_in_chain = True
         temp_m = self.m; self.m = self.m_burn
-        for iter in range(self.burn_in * 2):
+        for iter in range(self.burn_in):
             self.sample(X_train, y_train, self.learning_rate)
             for test_features, test_labels in test_ds:
                 self.model_validate(test_features, test_labels)

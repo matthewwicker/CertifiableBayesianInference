@@ -80,6 +80,19 @@ class StochasticGradientDescent(optimizer.Optimizer):
                 worst_case = self.model(features_adv)
                 output = (predictions*self.robust_lambda) + ((1-self.robust_lambda)*worst_case)
                 loss = self.loss_func(labels, output)
+            elif(int(self.robust_train) == 5):
+                output = tf.zeros(predictions.shape)
+                for _mc_ in range(self.loss_monte_carlo):
+                    eps = tfp.random.rayleigh([1], scale=self.epsilon/2.0)
+                    logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=self.epsilon)
+                    v1 = tf.one_hot(labels, depth=10)
+                    v2 = 1 - tf.one_hot(labels, depth=10)
+                    v1 = tf.squeeze(v1); v2 = tf.squeeze(v2)
+                    worst_case = tf.math.add(tf.math.multiply(v2, logit_u), tf.math.multiply(v1, logit_l))
+                    worst_case = self.model.layers[-1].activation(worst_case)
+                    one_hot_cls = tf.one_hot(labels, depth=10)
+                    output += (1.0/self.loss_monte_carlo) * worst_case
+                loss = self.loss_func(labels, output)
 
         # Get the gradients
         weight_gradient = tape.gradient(loss, self.model.trainable_variables)
