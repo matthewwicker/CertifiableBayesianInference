@@ -106,8 +106,11 @@ class VariationalOnlineGuassNewton(optimizer.Optimizer):
                 loss = self.loss_func(labels, output)
             elif(int(self.robust_train) == 5):
                 output = tf.zeros(predictions.shape)
+                self.epsilon = max(0.0001, self.epsilon)
+                self.eps_dist = tfp.distributions.Exponential(1.0/self.epsilon)
                 for _mc_ in range(self.loss_monte_carlo):
-                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    #eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    eps = self.eps_dist.sample()
                     logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=eps)
                     v1 = tf.one_hot(labels, depth=10)
                     v2 = 1 - tf.one_hot(labels, depth=10)
@@ -119,8 +122,11 @@ class VariationalOnlineGuassNewton(optimizer.Optimizer):
                 loss = self.loss_func(labels, output)
             elif(int(self.robust_train) == 6):
                 output = tf.zeros(predictions.shape)
+                self.epsilon = max(0.0001, self.epsilon)
+                self.eps_dist = tfp.distributions.Exponential(1.0/self.epsilon)
                 for _mc_ in range(self.loss_monte_carlo):
-                    eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    #eps = tfp.random.rayleigh([1], scale=self.epsilon)
+                    eps = self.eps_dist.sample()
                     features_adv = analyzers.FGSM(self, features, self.attack_loss, eps=self.epsilon, num_models=-1)
                     worst_case = self.model(features_adv)
                     output += (1.0/self.loss_monte_carlo) * worst_case

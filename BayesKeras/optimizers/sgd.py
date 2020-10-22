@@ -82,6 +82,8 @@ class StochasticGradientDescent(optimizer.Optimizer):
                 loss = self.loss_func(labels, output)
             elif(int(self.robust_train) == 5):
                 output = tf.zeros(predictions.shape)
+                self.epsilon = max(0.0001, self.epsilon)
+                self.eps_dist = tfp.distributions.Exponential(1.0/self.epsilon)
                 for _mc_ in range(self.loss_monte_carlo):
                     eps = tfp.random.rayleigh([1], scale=self.epsilon/2.0)
                     logit_l, logit_u = analyzers.IBP(self, features, self.model.trainable_variables, eps=self.epsilon)

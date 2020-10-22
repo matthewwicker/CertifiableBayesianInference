@@ -17,6 +17,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from tqdm import trange
 
+import tensorflow_probability as tfp
 from BayesKeras import analyzers
 
 # A dumb mistake on my part which needs to be factored out
@@ -68,6 +69,7 @@ class Optimizer(ABC):
         self.attack_loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
         self.loss_monte_carlo = kwargs.get('loss_mc', 2)
+        self.eps_dist = tfp.distributions.Exponential(rate = 1.0/float(self.epsilon))
 
         self.acc_log = []
         self.rob_log = []
